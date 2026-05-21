@@ -55,7 +55,8 @@ export default function Financials() {
                                 <tr className="border-b border-slate-100">
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Gerencia</th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">
-                                        Ingresos vs Meta <span className="text-[10px] text-indigo-500 font-bold normal-case">(Meta P. {targetPct.toFixed(1)}%)</span>
+                                        <div>Ingresos vs Meta</div>
+                                        <div className="text-[10px] text-indigo-500 font-bold normal-case tracking-normal mt-1">(Meta P. {targetPct.toFixed(1)}%)</div>
                                     </th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Recuperación vs Meta</th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Instalación vs Meta</th>
