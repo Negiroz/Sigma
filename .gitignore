@@ -17,6 +17,7 @@ login_token.json
 # SQLite databases
 *.db
 *.db-journal
+!/server/dev.db
 
 # Logs
 *.log
