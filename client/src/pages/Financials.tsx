@@ -54,7 +54,9 @@ export default function Financials() {
                             <thead>
                                 <tr className="border-b border-slate-100">
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Gerencia</th>
-                                    <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Ingresos vs Meta</th>
+                                    <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">
+                                        Ingresos vs Meta <span className="text-[10px] text-indigo-500 font-bold normal-case">(Meta P. {targetPct.toFixed(1)}%)</span>
+                                    </th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Recuperación vs Meta</th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Instalación vs Meta</th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider text-center">% Churn</th>
@@ -94,7 +96,7 @@ export default function Financials() {
                                                     </div>
                                                     <div className="pl-[60px]">
                                                         <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
-                                                            ${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()} <span className={revenueAch >= targetPct ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>(Meta P. {targetPct.toFixed(1)}%)</span>
+                                                            ${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()}
                                                         </span>
                                                     </div>
                                                 </div>
