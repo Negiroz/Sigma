@@ -22,6 +22,12 @@ export default function Financials() {
     const monthName = new Date(0, month - 1).toLocaleString('es-ES', { month: 'long' });
     const formattedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
+    const now = new Date();
+    const isCurrentMonth = month === (now.getMonth() + 1) && year === now.getFullYear();
+    const today = isCurrentMonth ? now.getDate() : new Date(year, month, 0).getDate();
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const targetPct = (today / daysInMonth) * 100;
+
     return (
         <div className="space-y-8">
             <div>
@@ -76,18 +82,20 @@ export default function Financials() {
                                             <td className="py-5">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center space-x-3">
-                                                        <span className={`text-sm font-bold w-12 ${revenueAch >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                                        <span className={`text-sm font-bold w-12 ${revenueAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                             {revenueAch.toFixed(1)}%
                                                         </span>
                                                         <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                             <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${revenueAch >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                                                                className={`h-full rounded-full transition-all duration-500 ${revenueAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
                                                                 style={{ width: `${Math.min(revenueAch, 100)}%` }}
                                                             />
                                                         </div>
                                                     </div>
                                                     <div className="pl-[60px]">
-                                                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()}</span>
+                                                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                                                            ${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()} <span className={revenueAch >= targetPct ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>(Meta P. {targetPct.toFixed(1)}%)</span>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </td>
