@@ -1,10 +1,19 @@
+import { useState, Fragment } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { useConfig } from '../contexts/ConfigContext';
-import { Activity, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function Financials() {
     const { month, year, companyId } = useConfig();
+    const [expandedManagers, setExpandedManagers] = useState<Record<string, boolean>>({});
+
+    const toggleManager = (managerName: string) => {
+        setExpandedManagers(prev => ({
+            ...prev,
+            [managerName]: !prev[managerName]
+        }));
+    };
 
     const { data: performance, isLoading: isPerfLoading, error: perfError } = useQuery({
         queryKey: ['performanceStats', month, year, companyId],
@@ -73,83 +82,175 @@ export default function Financials() {
                                     const installationAch = m.installationGoal > 0 ? (m.installations / m.installationGoal) * 100 : 0;
 
                                     return (
-                                        <tr key={m.name} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="py-5">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                                                        {m.name.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-800 text-base">{m.name}</p>
-                                                        <p className="text-xs text-slate-400">Gerencia Regional</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5">
-                                                <div className="space-y-1">
+                                        <Fragment key={m.name}>
+                                            <tr 
+                                                className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                                                onClick={() => toggleManager(m.name)}
+                                            >
+                                                <td className="py-5">
                                                     <div className="flex items-center space-x-3">
-                                                        <span className={`text-sm font-bold w-12 ${revenueAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                            {revenueAch.toFixed(1)}%
-                                                        </span>
-                                                        <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${revenueAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
-                                                                style={{ width: `${Math.min(revenueAch, 100)}%` }}
-                                                            />
+                                                        {expandedManagers[m.name] ? (
+                                                            <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                                                        ) : (
+                                                            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                                                        )}
+                                                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                                                            {m.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-800 text-base">{m.name}</p>
+                                                            <p className="text-xs text-slate-400">Gerencia Regional</p>
                                                         </div>
                                                     </div>
-                                                    <div className="pl-[60px]">
-                                                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
-                                                            ${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center space-x-3">
-                                                        <span className={`text-sm font-bold w-12 ${recoveryAch >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
-                                                            {recoveryAch.toFixed(1)}%
-                                                        </span>
-                                                        <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${recoveryAch >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} 
-                                                                style={{ width: `${Math.min(recoveryAch, 100)}%` }}
-                                                            />
+                                                </td>
+                                                <td className="py-5">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center space-x-3">
+                                                            <span className={`text-sm font-bold w-12 ${revenueAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                {revenueAch.toFixed(1)}%
+                                                            </span>
+                                                            <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className={`h-full rounded-full transition-all duration-500 ${revenueAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+                                                                    style={{ width: `${Math.min(revenueAch, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="pl-[60px]">
+                                                            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                                                                ${m.billed.toLocaleString()} / ${m.revenueGoal.toLocaleString()}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <div className="pl-[60px]">
-                                                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{m.recoveryActual} de {m.recoveryGoal} (React + Retiros)</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center space-x-3">
-                                                        <span className={`text-sm font-bold w-12 ${installationAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                            {installationAch.toFixed(1)}%
-                                                        </span>
-                                                        <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${installationAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
-                                                                style={{ width: `${Math.min(installationAch, 100)}%` }}
-                                                            />
+                                                </td>
+                                                <td className="py-5">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center space-x-3">
+                                                            <span className={`text-sm font-bold w-12 ${recoveryAch >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                                                {recoveryAch.toFixed(1)}%
+                                                            </span>
+                                                            <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className={`h-full rounded-full transition-all duration-500 ${recoveryAch >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                                                                    style={{ width: `${Math.min(recoveryAch, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="pl-[60px]">
+                                                            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{m.recoveryActual} de {m.recoveryGoal} (React + Retiros)</span>
                                                         </div>
                                                     </div>
-                                                    <div className="pl-[60px]">
-                                                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{m.installations} / {m.installationGoal} equipos</span>
+                                                </td>
+                                                <td className="py-5">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center space-x-3">
+                                                            <span className={`text-sm font-bold w-12 ${installationAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                {installationAch.toFixed(1)}%
+                                                            </span>
+                                                            <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className={`h-full rounded-full transition-all duration-500 ${installationAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+                                                                    style={{ width: `${Math.min(installationAch, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="pl-[60px]">
+                                                            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{m.installations} / {m.installationGoal} equipos</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5 text-center">
-                                                <div className="flex flex-col items-center justify-center">
-                                                    <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full ${Number(m.churnRate) > 2 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                        <span className="text-xs font-bold">{Number(m.churnRate).toFixed(1)}%</span>
-                                                        {Number(m.churnRate) > 2 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
+                                                </td>
+                                                <td className="py-5 text-center">
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full ${Number(m.churnRate) > 2 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                            <span className="text-xs font-bold">{Number(m.churnRate).toFixed(1)}%</span>
+                                                            {Number(m.churnRate) > 2 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                            </tr>
+                                            {expandedManagers[m.name] && m.branches?.map((branch: any) => {
+                                                const branchRevAch = branch.revenueGoal > 0 ? (branch.billed / branch.revenueGoal) * 100 : 0;
+                                                const branchRecAch = branch.recoveryGoal > 0 ? (branch.recoveryActual / branch.recoveryGoal) * 100 : 0;
+                                                const branchInstAch = branch.installationGoal > 0 ? (branch.installations / branch.installationGoal) * 100 : 0;
+
+                                                return (
+                                                    <tr key={branch.name} className="bg-slate-50/30 hover:bg-slate-50/70 transition-colors">
+                                                        <td className="py-4 pl-12 pr-4">
+                                                            <div className="flex items-center space-x-3 border-l-2 border-indigo-400 pl-4">
+                                                                <div>
+                                                                    <p className="font-bold text-slate-700 text-sm">{branch.name}</p>
+                                                                    <p className="text-[10px] text-slate-400 font-medium">Sede</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 pr-4">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <span className={`text-xs font-bold w-12 ${branchRevAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                        {branchRevAch.toFixed(1)}%
+                                                                    </span>
+                                                                    <div className="w-28 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                                        <div 
+                                                                            className={`h-full rounded-full transition-all duration-500 ${branchRevAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+                                                                            style={{ width: `${Math.min(branchRevAch, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="pl-[60px]">
+                                                                    <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">
+                                                                        ${branch.billed.toLocaleString()} / ${branch.revenueGoal.toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 pr-4">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <span className={`text-xs font-bold w-12 ${branchRecAch >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                                                        {branchRecAch.toFixed(1)}%
+                                                                    </span>
+                                                                    <div className="w-28 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                                        <div 
+                                                                            className={`h-full rounded-full transition-all duration-500 ${branchRecAch >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                                                                            style={{ width: `${Math.min(branchRecAch, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="pl-[60px]">
+                                                                    <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">{branch.recoveryActual} de {branch.recoveryGoal} (React + Retiros)</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 pr-4">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <span className={`text-xs font-bold w-12 ${branchInstAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                        {branchInstAch.toFixed(1)}%
+                                                                    </span>
+                                                                    <div className="w-28 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                                        <div 
+                                                                            className={`h-full rounded-full transition-all duration-500 ${branchInstAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+                                                                            style={{ width: `${Math.min(branchInstAch, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="pl-[60px]">
+                                                                    <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">{branch.installations} / {branch.installationGoal} equipos</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 text-center">
+                                                            <div className="flex flex-col items-center justify-center">
+                                                                <div className={`flex items-center space-x-1 px-2 py-0.5 rounded-full ${Number(branch.churnRate) > 2 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                                    <span className="text-[10px] font-bold">{Number(branch.churnRate).toFixed(1)}%</span>
+                                                                    {Number(branch.churnRate) > 2 ? <AlertTriangle className="h-2.5 w-2.5" /> : <CheckCircle className="h-2.5 w-2.5" />}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </Fragment>
                                     );
                                 })}
                             </tbody>

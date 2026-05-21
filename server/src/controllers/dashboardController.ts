@@ -403,7 +403,8 @@ export const getPerformanceStats = async (req: Request, res: Response): Promise<
             recoveryActual: number,
             recoveryGoal: number,
             churnRate: number,
-            count: number
+            count: number,
+            branches: any[]
         }>();
         
         branchStats.forEach(stat => {
@@ -419,7 +420,8 @@ export const getPerformanceStats = async (req: Request, res: Response): Promise<
                     recoveryActual: 0,
                     recoveryGoal: 0,
                     churnRate: 0,
-                    count: 0
+                    count: 0,
+                    branches: []
                 });
             }
             const existing = managerStatsMap.get(stat.managerName)!;
@@ -433,6 +435,18 @@ export const getPerformanceStats = async (req: Request, res: Response): Promise<
             existing.recoveryGoal += stat.recoveryGoal;
             existing.churnRate += stat.churnRate;
             existing.count += 1;
+            existing.branches.push({
+                name: stat.branchName,
+                billed: stat.billed,
+                target: stat.target,
+                previous: stat.previous,
+                revenueGoal: stat.revenueGoal,
+                installations: stat.installations,
+                installationGoal: stat.installationGoal,
+                recoveryActual: stat.recoveryActual,
+                recoveryGoal: stat.recoveryGoal,
+                churnRate: stat.churnRate
+            });
         });
 
         const byManagement = Array.from(managerStatsMap.values()).map(m => ({
