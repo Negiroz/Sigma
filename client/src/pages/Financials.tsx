@@ -59,7 +59,10 @@ export default function Financials() {
                                         <div className="text-[10px] text-indigo-500 font-bold normal-case tracking-normal mt-1">(Meta P. {targetPct.toFixed(1)}%)</div>
                                     </th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Recuperación vs Meta</th>
-                                    <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">Instalación vs Meta</th>
+                                    <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider">
+                                        <div>Instalación vs Meta</div>
+                                        <div className="text-[10px] text-indigo-500 font-bold normal-case tracking-normal mt-1">(Meta P. {targetPct.toFixed(1)}%)</div>
+                                    </th>
                                     <th className="pb-5 font-bold text-slate-500 text-xs uppercase tracking-wider text-center">% Churn</th>
                                 </tr>
                             </thead>
@@ -123,12 +126,12 @@ export default function Financials() {
                                             <td className="py-5">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center space-x-3">
-                                                        <span className={`text-sm font-bold w-12 ${installationAch >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                                        <span className={`text-sm font-bold w-12 ${installationAch >= targetPct ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                             {installationAch.toFixed(1)}%
                                                         </span>
                                                         <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                             <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${installationAch >= 100 ? 'bg-fuchsia-500' : 'bg-indigo-400'}`} 
+                                                                className={`h-full rounded-full transition-all duration-500 ${installationAch >= targetPct ? 'bg-emerald-500' : 'bg-rose-500'}`} 
                                                                 style={{ width: `${Math.min(installationAch, 100)}%` }}
                                                             />
                                                         </div>
