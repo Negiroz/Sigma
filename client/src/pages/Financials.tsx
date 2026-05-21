@@ -1,18 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { useConfig } from '../contexts/ConfigContext';
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, CreditCard, Activity, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function Financials() {
     const { month, year, companyId } = useConfig();
-
-    const { data: financials, isLoading: isFinLoading, error: finError } = useQuery({
-        queryKey: ['financialStats', month, year, companyId],
-        queryFn: async () => {
-            const res = await api.get(`/dashboard/financials?month=${month}&year=${year}&companyId=${companyId || ''}`);
-            return res.data;
-        }
-    });
 
     const { data: performance, isLoading: isPerfLoading, error: perfError } = useQuery({
         queryKey: ['performanceStats', month, year, companyId],
@@ -22,73 +14,19 @@ export default function Financials() {
         }
     });
 
-    if (isFinLoading || isPerfLoading) return <div className="text-slate-500 p-8">Cargando datos de gerencias...</div>;
-    if (finError || perfError) return <div className="text-red-500 p-8">Error al cargar datos de gerencias</div>;
+    if (isPerfLoading) return <div className="text-slate-500 p-8">Cargando datos de gerencias...</div>;
+    if (perfError) return <div className="text-red-500 p-8">Error al cargar datos de gerencias</div>;
 
-    const { summary } = financials;
     const { byManagement } = performance;
 
     const monthName = new Date(0, month - 1).toLocaleString('es-ES', { month: 'long' });
     const formattedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-
-    // Dummy trend data
-    const trendData = [
-        { day: '01', amount: 4000 },
-        { day: '05', amount: 3000 },
-        { day: '10', amount: 5000 },
-        { day: '15', amount: 2780 },
-        { day: '20', amount: 1890 },
-        { day: '25', amount: 2390 },
-        { day: '30', amount: 3490 },
-    ];
 
     return (
         <div className="space-y-8">
             <div>
                 <h2 className="text-3xl font-bold text-slate-800">Gerencias</h2>
                 <p className="text-slate-500">Resumen de facturación y cobranza - {formattedMonth} {year}</p>
-            </div>
-
-            {/* Financial Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-green-50 rounded-lg">
-                            <DollarSign className="h-6 w-6 text-green-500" />
-                        </div>
-                        <span className="flex items-center text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full">
-                            <ArrowUpRight className="h-3 w-3 mr-1" /> +12.5%
-                        </span>
-                    </div>
-                    <p className="text-slate-500 text-sm font-medium">Facturación Total</p>
-                    <p className="text-3xl font-bold text-slate-800">${summary.totalBilled.toLocaleString()}</p>
-                </div>
-
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                            <FileText className="h-6 w-6 text-blue-500" />
-                        </div>
-                        <span className="flex items-center text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">
-                            <ArrowUpRight className="h-3 w-3 mr-1" /> +3.2%
-                        </span>
-                    </div>
-                    <p className="text-slate-500 text-sm font-medium">Facturas Cobradas</p>
-                    <p className="text-3xl font-bold text-slate-800">{summary.collectedCount}</p>
-                </div>
-
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-orange-50 rounded-lg">
-                            <CreditCard className="h-6 w-6 text-orange-500" />
-                        </div>
-                        <span className="flex items-center text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                            <ArrowDownRight className="h-3 w-3 mr-1" /> +1.2%
-                        </span>
-                    </div>
-                    <p className="text-slate-500 text-sm font-medium">Monto Pendiente</p>
-                    <p className="text-3xl font-bold text-slate-800">${summary.pendingAmount.toLocaleString()}</p>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 gap-8">
