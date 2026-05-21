@@ -1,0 +1,440 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id               Int               @id @default(autoincrement())
+  name             String
+  branches         Branch[]
+  users            User[]
+  employees        Employee[]
+  installationTeams InstallationTeam[]
+  financialData    FinancialData[]
+  generalGoals     GeneralGoal[]
+  teams            Team[]
+}
+
+model Branch {
+  id          Int                 @id @default(autoincrement())
+  name        String
+  division    String              @default("Primera")
+  companyId   Int
+  company     Company             @relation(fields: [companyId], references: [id])
+  managerId   Int? // Optional link to an Employee who is the manager
+  employees   Employee[]
+  installationTeams InstallationTeam[]
+  performance BranchPerformance[]
+  dailyMetrics DailyBranchMetric[]
+  managers    User[]              @relation("ManagerBranches")
+  competitors Competitor[]
+}
+
+// ... (skipping User, Employee)
+
+model InstallationTeam {
+  id          Int           @id @default(autoincrement())
+  name        String
+  companyId   Int
+  company     Company       @relation(fields: [companyId], references: [id])
+  branchId    Int?
+  branch      Branch?       @relation(fields: [branchId], references: [id])
+  performance InstallationPerformance[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String   @default("USER") // ADMIN, MANAGER, VIEWER
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
+  managedBranches Branch[] @relation("ManagerBranches")
+  assignedPenalizations AgentPenalizationEvent[]
+  coachingsConducted FieldCoaching[] @relation("CoachingSupervisor")
+  knowledgeBaseItems KnowledgeBaseItem[]
+}
+
+// Unified Employee Model (Replaces Agent/Closer)
+model Employee {
+  id          Int                   @id @default(autoincrement())
+  name        String
+  role        String // MANAGER, AGENT, CLOSER
+  companyId   Int
+  company     Company               @relation(fields: [companyId], references: [id])
+  branchId    Int? // Managers might not be tied to one branch loosely, or yes.
+  branch      Branch?               @relation(fields: [branchId], references: [id])
+  performance EmployeePerformance[]
+  photo       String?
+  active      Boolean               @default(true)
+  
+  // Gamification
+  currentXp   Int                   @default(0)
+  currentLevel String               @default("BRONZE")
+  dailyMetrics DailyAgentMetric[]
+  
+  // Versus Relations
+  matchesAsPlayer1 VersusMatch[]    @relation("Player1")
+  matchesAsPlayer2 VersusMatch[]    @relation("Player2")
+  bonuses          MonthlyBonus[]
+  
+  // Universidad de Ventas
+  simulationFeedbacks SalesSimulationFeedback[]
+  knowledgeEvaluations KnowledgeEvaluation[]
+  fieldCoachingsReceived FieldCoaching[]
+
+  // Teams
+  teamId          Int?
+  team            Team?                 @relation("TeamMembers", fields: [teamId], references: [id])
+  supervisedTeams Team[]                @relation("TeamSupervisor")
+}
+
+model Team {
+  id           Int        @id @default(autoincrement())
+  name         String
+  supervisorId Int
+  supervisor   Employee   @relation("TeamSupervisor", fields: [supervisorId], references: [id])
+  members      Employee[] @relation("TeamMembers")
+  companyId    Int
+  company      Company    @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+model MonthlyBonus {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  month       Int
+  year        Int
+  amount      Float    @default(0)
+  score       Float    @default(0)
+  weight      Float    @default(0) // Percentage weight in the pote
+  companyId   Int
+  
+  @@unique([employeeId, month, year])
+  @@index([month, year])
+}
+
+
+model FinancialData {
+  id                Int     @id @default(autoincrement())
+  month             Int
+  year              Int
+  companyId         Int
+  company           Company @relation(fields: [companyId], references: [id])
+  
+  // Metrics
+  billedAmount      Decimal @default(0.00)
+  collectedInvoices Int     @default(0)
+  activeClients     Int     @default(0)
+  churnRate         Decimal @default(0.00) // Percentage
+  arpu              Decimal @default(0.00) // Average Revenue Per User
+  
+  // Historical snapshots could go here or be derived
+
+  @@unique([month, year, companyId])
+  @@index([month, year])
+}
+
+model GeneralGoal {
+  id               Int     @id @default(autoincrement())
+  month            Int
+  year             Int
+  companyId        Int
+  company          Company @relation(fields: [companyId], references: [id])
+  
+  installationGoal Int     @default(0)
+  clientGoal       Int     @default(0)
+  churnGoal        Decimal @default(0.00) // New Goal
+
+  @@unique([month, year, companyId])
+  @@index([month, year])
+}
+
+model EmployeePerformance {
+  id           Int      @id @default(autoincrement())
+  employeeId   Int
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  month        Int
+  year         Int
+  
+  // Combined Metrics
+  closings     Int      @default(0) // For Closers/Agents
+  prospects    Int      @default(0) // For Agents
+  closingGoal  Int      @default(0)
+  prospectGoal Int      @default(0)
+  
+  // New goals for Field Agents
+  reactivations        Int      @default(0)
+  reactivationGoal     Int      @default(0)
+  equipmentRemovals    Int      @default(0)
+  equipmentRemovalGoal Int      @default(0)
+  conversionGoal       Float    @default(0.0) // Percentage (e.g. 20)
+
+  @@unique([employeeId, month, year])
+  @@index([month, year])
+}
+
+model InstallationPerformance {
+  id            Int             @id @default(autoincrement())
+  teamId        Int
+  team          InstallationTeam @relation(fields: [teamId], references: [id])
+  month         Int
+  year          Int
+  installations Int             @default(0)
+  
+  @@unique([teamId, month, year])
+  @@index([month, year])
+}
+
+// Branch Performance now focuses on aggregations or specific branch metrics like local installations
+model BranchPerformance {
+  id            Int     @id @default(autoincrement())
+  branchId      Int
+  branch        Branch  @relation(fields: [branchId], references: [id])
+  month         Int
+  year          Int
+  
+  installations Int     @default(0) // Internal installations
+  activeClients Int     @default(0)
+  churnRate     Decimal @default(0.00)
+  
+  // New metrics
+  installationGoal Int     @default(0)
+  salesProjection  Decimal @default(0.00)
+  billingGoal      Decimal @default(0.00)
+
+  @@unique([branchId, month, year])
+  @@index([month, year])
+}
+
+model DailyBranchMetric {
+  id            Int      @id @default(autoincrement())
+  branchId      Int
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  date          DateTime
+  
+  installations Int      @default(0)
+  revenue       Decimal  @default(0.00)
+  invoices      Int      @default(0)
+
+  @@unique([branchId, date])
+  @@index([date])
+}
+
+model DailyAgentMetric {
+  id              Int      @id @default(autoincrement())
+  employeeId      Int
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  date            DateTime
+  month           Int
+  year            Int
+
+  // Group A: Sales (Daily inputs)
+  prospects       Int      @default(0)
+  closings        Int      @default(0)
+  revenue         Float    @default(0)
+  reactivations   Int      @default(0) // New
+  equipmentRemovals Int    @default(0) // New
+
+  // Group B: Operations
+  supportTickets  Int      @default(0)
+  tasksScheduled  Int      @default(0) // New: Tareas Programadas
+  tasksDone       Int      @default(0) // New: Tareas Realizadas
+
+  // Group C: Attention (New)
+  conversations   Int      @default(0)
+  payments        Int      @default(0)
+
+  // Group D: Quality (Renamed from C)
+  supervisorScore Float    @default(0) // 1-10
+  versusPoints    Int      @default(0)
+
+  // Group E: Penalties (Renamed from D)
+  avoidableTickets Int     @default(0)
+  penalizationReasons String?
+  penalizations AgentPenalizationEvent[]
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@index([month, year])
+}
+
+model VersusMatch {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  companyId Int
+  
+  agent1Id  Int
+  agent1    Employee @relation("Player1", fields: [agent1Id], references: [id])
+  
+  agent2Id  Int?
+  agent2    Employee? @relation("Player2", fields: [agent2Id], references: [id])
+
+  status    String   @default("PENDING") // PENDING, FINISHED
+  winnerId  Int?     // ID del ganador
+
+  @@unique([date, agent1Id])
+  @@index([date])
+}
+
+// KpiScoreConfig
+model KpiScoreConfig {
+  id               Int      @id @default(autoincrement())
+  month            Int
+  year             Int
+  
+  // --- Agentes Integrales (CLOSER) ---
+  supportTickets   Float    @default(6) // Soportes Resueltos
+  tasksDone        Float    @default(2) // Soportes Escalados
+  payments         Float    @default(0.5)
+  conversations    Float    @default(0.2)
+  closings         Float    @default(30)
+  revenueDivider   Float    @default(10) // Math.floor(revenue / x)
+
+  // --- Agentes de Campo (AGENT) ---
+  agentClosingPoints      Float    @default(300) // Puntos base por 100% meta de ventas
+  agentProspectPoints     Float    @default(50)  // Puntos base por 100% meta prospectos
+  agentConversionPoints   Float    @default(50)  // Puntos base por 100% meta conversión
+  agentReactivationPoints Float    @default(100) // Puntos base por 100% meta reactivaciones
+  agentEquipmentPoints    Float    @default(100) // Puntos base por 100% meta retiro equipo
+  agentPenaltyPoints      Float    @default(30)  // Puntos deducidos por penalización CRM
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([month, year])
+}
+
+// PenalizationType
+model PenalizationType {
+  id          Int      @id @default(autoincrement())
+  name        String
+  pointsCost  Int      @default(0)
+  targetRole  String   @default("CLOSER")
+  active      Boolean  @default(true)
+  events      AgentPenalizationEvent[]
+
+  @@unique([name, targetRole])
+}
+
+// AgentPenalizationEvent
+model AgentPenalizationEvent {
+  id                 Int              @id @default(autoincrement())
+  dailyAgentMetricId Int
+  dailyMetric        DailyAgentMetric @relation(fields: [dailyAgentMetricId], references: [id], onDelete: Cascade)
+  penalizationTypeId Int
+  penalizationType   PenalizationType @relation(fields: [penalizationTypeId], references: [id])
+  assignedByUserId   Int
+  assignedByUser     User             @relation(fields: [assignedByUserId], references: [id])
+  createdAt          DateTime         @default(now())
+}
+
+// --- Universidad de Ventas Modules ---
+
+// Module 3: Competitor Intelligence
+model Competitor {
+  id        Int      @id @default(autoincrement())
+  name      String
+  branchId  Int
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  active    Boolean  @default(true)
+  offers    CompetitorOffer[]
+  
+  @@unique([name, branchId])
+}
+
+model CompetitorOffer {
+  id            Int        @id @default(autoincrement())
+  competitorId  Int
+  competitor    Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  bandwidth     String     // e.g., "500 Mbps"
+  price         Decimal    @default(0.00)
+  installPrice  Decimal    @default(0.00)
+  equipment     String?    // e.g., "ONT Huawei + Router WiFi 6"
+  promo         String?    // e.g., "Primer mes gratis"
+  updatedAt     DateTime   @updatedAt
+}
+
+// Module 1: Daily Training
+model KnowledgeBaseItem {
+  id          Int      @id @default(autoincrement())
+  type        String   // "CASE" (Simulation) or "QUESTION" (Evaluation)
+  contextType String?  // e.g., "NEW_CLIENT", "COMPETITOR" (nullable)
+  content     String   // The case description or the question text
+  options     String?  // JSON string for options if type="QUESTION"
+  active      Boolean  @default(true)
+  creatorId   Int?
+  creator     User?    @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model SalesSimulationFeedback {
+  id                        Int      @id @default(autoincrement())
+  employeeId                Int      // The agent who was evaluated
+  employee                  Employee @relation(fields: [employeeId], references: [id])
+  notes                     String?  // General observations
+  speechObservations       String?  // Oportunidades de mejora en el discurso
+  objectionObservations    String?  // Oportunidades de mejora en manejo de objeciones
+  date                      DateTime @default(now())
+  isRead                    Boolean  @default(false) // For the popup reminder next turn
+}
+
+model KnowledgeEvaluation {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  date        DateTime @default(now())
+  score       Int      // Computed score from 5 questions (max 20)
+}
+
+// Module 2: Field Coaching
+model FieldCoaching {
+  id              Int      @id @default(autoincrement())
+  employeeId      Int      // The field agent
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  supervisorId    Int      // The user doing the coaching
+  supervisor      User     @relation("CoachingSupervisor", fields: [supervisorId], references: [id])
+  date            DateTime @default(now())
+  
+  // Primary Evaluation
+  presence        String   // "Bueno", "Regular", "Deficiente"
+  routeKnowledge  String
+  crmUpdate       String
+  
+  // Results
+  finalScore      Float    @default(0.0) // /20
+  conclusions     String?
+  improvements    String?
+  
+  clients         FieldCoachingClient[]
+}
+
+model FieldCoachingClient {
+  id               Int           @id @default(autoincrement())
+  fieldCoachingId  Int
+  fieldCoaching    FieldCoaching @relation(fields: [fieldCoachingId], references: [id], onDelete: Cascade)
+  
+  // Interactions
+  tone             String
+  speed            String
+  pitch            String
+  listening        String
+  objections       String
+  tools            String
+  time             String
+  
+  // Calls Evaluated
+  prospectCall     String?
+  reactivationCall String?
+  removalCall      String?
+}
